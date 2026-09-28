@@ -1,0 +1,32 @@
+{
+  "slime": {
+    "name": "Slime",
+    "maxHp": 30,
+    "defense": 0,
+    "speed": 60,
+    "damage": 6,
+    "reach": 34,
+    "windup": 450,
+    "recovery": 700,
+    "hurtResist": 0,
+    "color": "#62c26a",
+    "width": 40,
+    "height": 40,
+    "originY": 0.86
+  },
+  "goblin": {
+    "name": "Goblin",
+    "maxHp": 45,
+    "defense": 1,
+    "speed": 90,
+    "damage": 9,
+    "reach": 40,
+    "windup": 380,
+    "recovery": 600,
+    "hurtResist": 0,
+    "color": "#8fa83a",
+    "width": 36,
+    "height": 50,
+    "originY": 0.92
+  }
+}

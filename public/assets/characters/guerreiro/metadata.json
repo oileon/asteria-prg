@@ -1,0 +1,36 @@
+{
+  "group_id": "20d51b7b-b261-4fd0-8b95-078064e627d0",
+  "states": [
+    {
+      "character": {
+        "id": "48bc2faf-8c8e-470b-ae2c-3302d712744b",
+        "name": "Idle",
+        "prompt": "super deformed chibi anime swordsman, huge oversized head as big as the whole body, tiny body only two heads tall, big expressive blue eyes, spiky swept-back blonde hair, cream white short shoulder cape with orange swirl embroidery, gold brooch at the neck, brown tunic, blue belt with gold flower buckle, white and rose tabard skirt, brown leather gauntlet, holding a broadsword with gold crossguard, cute Ragnarok Online swordsman sprite, vibrant colors",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-09-28T18:08:19.036337+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-09-28T18:12:24.733644"
+}

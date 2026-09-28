@@ -1,0 +1,14 @@
+{
+  "maxHp": 100,
+  "speed": 170,
+  "laneSpeedFactor": 0.7,
+  "comboWindow": 600,
+  "combo": [
+    { "damage": 8,  "reach": 52, "duration": 260, "hitAt": 0.4, "knockback": 40,  "stun": 260, "lunge": 30 },
+    { "damage": 9,  "reach": 54, "duration": 280, "hitAt": 0.4, "knockback": 45,  "stun": 280, "lunge": 30 },
+    { "damage": 16, "reach": 62, "duration": 420, "hitAt": 0.5, "knockback": 200, "stun": 500, "lunge": 50 }
+  ],
+  "dodge": { "duration": 260, "speed": 380, "cooldown": 450 },
+  "hurtStun": 300,
+  "invulnAfterHit": 700
+}
