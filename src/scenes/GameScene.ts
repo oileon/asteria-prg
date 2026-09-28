@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import enemyData from "../data/enemies.json";
+import lunarisTiles from "../data/lunaris-tiles.json";
 import playerData from "../data/player.json";
 import { Enemy, type EnemyDef } from "../entities/Enemy";
 import { ATTACK_TINTS, Player, PLAYER_SIZE, type PlayerInput } from "../entities/Player";
@@ -7,6 +8,8 @@ import { calcDamage, inStrikeRange, isFinisher } from "../systems/combat";
 
 export const GAME_WIDTH = 960;
 export const GAME_HEIGHT = 540;
+
+type Terrain = "upper" | "lower";
 
 const LANE_TOP = 330;
 const LANE_BOTTOM = 490;
@@ -102,7 +105,7 @@ export class GameScene extends Phaser.Scene {
     this.wavePending = false;
     this.hitstopLeft = 0;
 
-    this.makeGroundTiles();
+    this.makeWangFrames();
     this.makeUiTextures();
     this.makePlayerAnimations();
     this.makeEnemyAnimations();
@@ -333,13 +336,52 @@ export class GameScene extends Phaser.Scene {
     const g = this.add.graphics().setDepth(-10000);
     g.fillGradientStyle(0x6cb8ff, 0x6cb8ff, 0xd9f0ff, 0xd9f0ff, 1).fillRect(0, 0, GAME_WIDTH, LANE_TOP);
 
-    this.add
-      .tileSprite(0, LANE_TOP, GAME_WIDTH, GAME_HEIGHT - LANE_TOP, "grass-tile")
-      .setOrigin(0, 0)
-      .setDepth(-10000);
-
+    this.drawGroundTiles();
     this.drawTreeline();
     this.drawForegroundDecor();
+  }
+
+  /**
+   * Chão com autotiling Wang (`src/data/lunaris-tiles.json`, gerado a partir do tileset
+   * `grama_terra.png` do PixelLab): uma trilha de terra ondulando pela lane em meio à
+   * grama, em vez de um piso liso repetido. Cada tile é escolhido pelos 4 vértices que o
+   * cercam (padrão dual-grid), amostrados de `pathTerrainAt`.
+   */
+  private drawGroundTiles(): void {
+    const TILE = lunarisTiles.tileSize;
+    const cols = Math.ceil(GAME_WIDTH / TILE);
+    const rows = Math.ceil((GAME_HEIGHT - LANE_TOP) / TILE);
+
+    const vertices: Terrain[][] = [];
+    for (let vy = 0; vy <= rows; vy++) {
+      const row: Terrain[] = [];
+      for (let vx = 0; vx <= cols; vx++) row.push(this.pathTerrainAt(vx, vy, rows));
+      vertices.push(row);
+    }
+
+    for (let cy = 0; cy < rows; cy++) {
+      for (let cx = 0; cx < cols; cx++) {
+        const corners = {
+          NW: vertices[cy][cx],
+          NE: vertices[cy][cx + 1],
+          SW: vertices[cy + 1][cx],
+          SE: vertices[cy + 1][cx + 1],
+        };
+        const tile = lunarisTiles.tiles.find(
+          (t) => t.corners.NE === corners.NE && t.corners.NW === corners.NW && t.corners.SE === corners.SE && t.corners.SW === corners.SW,
+        )!;
+        this.add
+          .image(cx * TILE, LANE_TOP + cy * TILE, "tiles-lunaris", `wang-${tile.x}-${tile.y}`)
+          .setOrigin(0, 0)
+          .setDepth(-10000);
+      }
+    }
+  }
+
+  /** Terreno num vértice da grade: "lower" (terra) perto do centro de uma trilha ondulada, senão "upper" (grama). */
+  private pathTerrainAt(vx: number, vy: number, rows: number): Terrain {
+    const pathCenter = rows / 2 + Math.sin(vx * 0.35) * 1.1;
+    return Math.abs(vy - pathCenter) <= 1.1 ? "lower" : "upper";
   }
 
   /**
@@ -385,18 +427,16 @@ export class GameScene extends Phaser.Scene {
   }
 
   /**
-   * Recorta o tile "grama pura" do tileset Wang do PixelLab (`grama_terra.png`,
-   * folha 128x128, 4x4 tiles de 32px) e gera uma textura tileável para o chão.
-   * Ver public/assets/tiles/lunaris/grama_terra.json (tile "wang_all_upper").
+   * Registra os 16 tiles Wang do tileset `grama_terra.png` (128x128, 4x4 tiles de 32px)
+   * como frames nomeados `wang-<x>-<y>`, pra recortar cada um sem duplicar a imagem.
+   * Ver `src/data/lunaris-tiles.json` para os cantos (corners) de cada tile.
    */
-  private makeGroundTiles(): void {
-    if (this.textures.exists("grass-tile")) return;
-    const sheet = this.textures.get("tiles-lunaris").getSourceImage() as HTMLImageElement;
-    const canvas = document.createElement("canvas");
-    canvas.width = 32;
-    canvas.height = 32;
-    canvas.getContext("2d")!.drawImage(sheet, 0, 96, 32, 32, 0, 0, 32, 32);
-    this.textures.addCanvas("grass-tile", canvas);
+  private makeWangFrames(): void {
+    const tex = this.textures.get("tiles-lunaris");
+    if (tex.has(`wang-${lunarisTiles.tiles[0].x}-${lunarisTiles.tiles[0].y}`)) return;
+    for (const t of lunarisTiles.tiles) {
+      tex.add(`wang-${t.x}-${t.y}`, 0, t.x, t.y, lunarisTiles.tileSize, lunarisTiles.tileSize);
+    }
   }
 
   /**

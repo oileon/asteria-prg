@@ -37,6 +37,18 @@ Só o tile "grama pura" está em uso (`GameScene.makeGroundTiles()`), tileado co
 **Pendente:** autotiling completo com a trilha de terra, árvores/pedras/casas
 (`create_tiles_pro`, `create_building_kit`), variação de mapa em vez de fundo plano.
 
+## Chão — autotiling Wang
+
+`public/assets/tiles/lunaris/grama_terra.png` (tileset gerado antes, mas só usado como grama
+lisa até agora) agora renderiza uma trilha de terra ondulando pela lane em meio à grama,
+com autotiling de verdade: `src/data/lunaris-tiles.json` guarda os 16 tiles Wang (cantos
+NE/NW/SE/SW + posição na folha), e `GameScene.drawGroundTiles()` monta uma grade de
+vértices (padrão dual-grid), amostra o terreno em cada um (`pathTerrainAt`, uma curva
+senoidal) e escolhe o tile certo por célula a partir dos 4 vértices que a cercam.
+
+**Pendente:** a transição é "quadrada" (o tileset não usa `shape_style: round`); mudar isso
+exigiria gerar o tileset de novo.
+
 ## Cenário — Floresta de Lunaris
 
 `public/assets/objects/` — 4 árvores (`tree-pine-a/b`, `tree-oak-a/b`, 112x112, `create_1_direction_object`
