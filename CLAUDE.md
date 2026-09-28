@@ -34,6 +34,5 @@ Phaser 3 + TypeScript estrito + Vite + Vitest. Arte 100% PixelLab (ver `docs/ass
 Protótipo da Fase 1 (Prototype): movimento em lane, combo de 3 golpes, esquiva com i-frames, hitstop,
 inimigos com telegraph/stun/knockback, 3 ondas. Próximos passos em `docs/design.md`.
 
-Guerreiro (jogador), Slime e Goblin já usam sprite e animações reais do PixelLab (projeto
-**asteria**, ver `docs/assets.md`); chão usa o tileset de grama do PixelLab. Resto do
-cenário (árvores, objetos, UI) ainda é placeholder gerado por código.
+Guerreiro (jogador), Slime, Goblin, cenário (árvores/pedras/arbustos) e UI (barra de vida,
+painel de aviso) já usam arte real do PixelLab (projeto **asteria**, ver `docs/assets.md`).

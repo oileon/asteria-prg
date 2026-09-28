@@ -37,6 +37,25 @@ Só o tile "grama pura" está em uso (`GameScene.makeGroundTiles()`), tileado co
 **Pendente:** autotiling completo com a trilha de terra, árvores/pedras/casas
 (`create_tiles_pro`, `create_building_kit`), variação de mapa em vez de fundo plano.
 
+## Cenário — Floresta de Lunaris
+
+`public/assets/objects/` — 4 árvores (`tree-pine-a/b`, `tree-oak-a/b`, 112x112, `create_1_direction_object`
+view sidescroller) formando a linha de árvores no horizonte (`GameScene.drawTreeline()`,
+depth fixo -9000, sempre atrás da lane); 2 pedras + 2 arbustos (`rock-a/b`, `bush-a/b`, 48x48)
+espalhados na faixa abaixo da lane jogável como decoração de primeiro plano
+(`drawForegroundDecor()`, fora da área de movimento — nunca atrapalham nem ficam "atravessados").
+Posições geradas com seed fixa (`Phaser.Math.RandomDataGenerator`), então o layout é sempre
+o mesmo entre execuções.
+
+## UI
+
+`public/assets/ui/` — 2 painéis do PixelLab (`create_ui_asset`):
+- `health-panel/panel.png` (384x192): só a barra (x:73-311 y:157-181) é recortada em
+  `GameScene.makeUiTextures()` → textura `hp-bar-bg`; o preenchimento é um `Graphics` verde/
+  amarelo/vermelho por cima, proporcional ao HP (`updateHpBar()`).
+- `banner-panel/panel.png` (512x192): moldura atrás do texto de "ONDA X" / vitória / derrota
+  (`bannerPanel`, alpha sincronizado com o texto do banner).
+
 ## Inimigos — Slime e Goblin
 
 `public/assets/characters/slime/` e `.../goblin/` — personagens `Slime Asteria`

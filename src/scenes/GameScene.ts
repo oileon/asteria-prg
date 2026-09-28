@@ -48,7 +48,11 @@ export class GameScene extends Phaser.Scene {
   private keys!: Record<string, Phaser.Input.Keyboard.Key>;
   private hud!: Phaser.GameObjects.Text;
   private banner!: Phaser.GameObjects.Text;
+  private bannerPanel!: Phaser.GameObjects.Image;
   private comboText!: Phaser.GameObjects.Text;
+  private hpBarBg!: Phaser.GameObjects.Image;
+  private hpBarFill!: Phaser.GameObjects.Graphics;
+  private hpText!: Phaser.GameObjects.Text;
   private hitstopLeft = 0;
   private pressed = { attack: false, dodge: false };
   private kills = 0;
@@ -63,6 +67,16 @@ export class GameScene extends Phaser.Scene {
 
   preload(): void {
     this.load.image("tiles-lunaris", "assets/tiles/lunaris/grama_terra.png");
+    this.load.image("tree-pine-a", "assets/objects/tree-pine-a/tree.png");
+    this.load.image("tree-pine-b", "assets/objects/tree-pine-b/tree.png");
+    this.load.image("tree-oak-a", "assets/objects/tree-oak-a/tree.png");
+    this.load.image("tree-oak-b", "assets/objects/tree-oak-b/tree.png");
+    this.load.image("rock-a", "assets/objects/rock-a/rock.png");
+    this.load.image("rock-b", "assets/objects/rock-b/rock.png");
+    this.load.image("bush-a", "assets/objects/bush-a/bush.png");
+    this.load.image("bush-b", "assets/objects/bush-b/bush.png");
+    this.load.image("ui-health-panel", "assets/ui/health-panel/panel.png");
+    this.load.image("ui-banner-panel", "assets/ui/banner-panel/panel.png");
     for (const [name, count] of Object.entries(PLAYER_ANIMATIONS)) {
       for (let i = 0; i < count; i++) {
         const frame = String(i).padStart(2, "0");
@@ -89,6 +103,7 @@ export class GameScene extends Phaser.Scene {
     this.hitstopLeft = 0;
 
     this.makeGroundTiles();
+    this.makeUiTextures();
     this.makePlayerAnimations();
     this.makeEnemyAnimations();
     this.drawBackground();
@@ -109,13 +124,26 @@ export class GameScene extends Phaser.Scene {
     for (const k of ["J", "Z"]) kb.on(`keydown-${k}`, () => (this.pressed.attack = true));
     for (const k of ["K", "X"]) kb.on(`keydown-${k}`, () => (this.pressed.dodge = true));
 
-    this.hud = this.add.text(16, 12, "", { fontFamily: "monospace", fontSize: "16px", color: "#ffffff" }).setDepth(10000);
+    // Barra de vida: moldura do PixelLab (recortada em makeUiTextures) + preenchimento
+    // desenhado por cima, proporcional ao HP. O número fica centralizado na barra.
+    this.hpBarBg = this.add.image(18, 16, "hp-bar-bg").setOrigin(0, 0).setDepth(10000);
+    this.hpBarFill = this.add.graphics().setDepth(10001);
+    this.hpText = this.add
+      .text(18 + this.hpBarBg.width / 2, 16 + this.hpBarBg.height / 2, "", {
+        fontFamily: "monospace", fontSize: "13px", color: "#ffffff", stroke: "#000", strokeThickness: 3,
+      })
+      .setOrigin(0.5)
+      .setDepth(10002);
+    this.hud = this.add
+      .text(18, 16 + this.hpBarBg.height + 4, "", { fontFamily: "monospace", fontSize: "14px", color: "#ffffff", stroke: "#000", strokeThickness: 3 })
+      .setDepth(10000);
     this.comboText = this.add
       .text(GAME_WIDTH - 16, 12, "", { fontFamily: "monospace", fontSize: "28px", color: "#ffd84d", stroke: "#000", strokeThickness: 4 })
       .setOrigin(1, 0)
       .setDepth(10000);
+    this.bannerPanel = this.add.image(GAME_WIDTH / 2, 120, "ui-banner-panel").setOrigin(0.5).setAlpha(0).setDepth(9999);
     this.banner = this.add
-      .text(GAME_WIDTH / 2, 120, "", { fontFamily: "monospace", fontSize: "36px", color: "#ffffff", stroke: "#000", strokeThickness: 6, align: "center" })
+      .text(GAME_WIDTH / 2, 120, "", { fontFamily: "monospace", fontSize: "32px", color: "#3a2210", stroke: "#f6dfa8", strokeThickness: 4, align: "center" })
       .setOrigin(0.5)
       .setDepth(10000);
     this.add
@@ -153,8 +181,21 @@ export class GameScene extends Phaser.Scene {
     }
     if (!this.gameOver && !this.wavePending && this.enemies.length === 0) this.nextWave();
 
-    this.hud.setText(`HP ${this.player.hp}/${playerData.maxHp}   Onda ${Math.min(this.wave, WAVES.length)}/${WAVES.length}   Abates ${this.kills}`);
+    this.updateHpBar();
+    this.hud.setText(`Onda ${Math.min(this.wave, WAVES.length)}/${WAVES.length}   Abates ${this.kills}`);
     this.comboText.setText(this.player.comboCount >= 2 ? `${this.player.comboCount} HITS` : "");
+  }
+
+  /** Preenche a barra de vida por cima da moldura, proporcional ao HP atual. */
+  private updateHpBar(): void {
+    const pct = Phaser.Math.Clamp(this.player.hp / playerData.maxHp, 0, 1);
+    const color = pct > 0.5 ? 0x5fd45f : pct > 0.25 ? 0xe8c22e : 0xe0473f;
+    const pad = 3; // margem pra não pintar por cima da borda da moldura recortada
+    const w = this.hpBarBg.width - pad * 2;
+    const h = this.hpBarBg.height - pad * 2;
+    this.hpBarFill.clear();
+    this.hpBarFill.fillStyle(color, 1).fillRect(this.hpBarBg.x + pad, this.hpBarBg.y + pad, w * pct, h);
+    this.hpText.setText(`${this.player.hp}/${playerData.maxHp}`);
   }
 
   /** Afasta inimigos sobrepostos na lane para não virarem um só alvo empilhado. */
@@ -221,7 +262,8 @@ export class GameScene extends Phaser.Scene {
     this.wave += 1;
     const defs = WAVES[this.wave - 1];
     this.banner.setText(`ONDA ${this.wave}`);
-    this.tweens.add({ targets: this.banner, alpha: { from: 1, to: 0 }, duration: 1400, delay: 400 });
+    this.bannerPanel.setAlpha(1);
+    this.tweens.add({ targets: [this.banner, this.bannerPanel], alpha: { from: 1, to: 0 }, duration: 1400, delay: 400 });
     defs.forEach((name, i) => {
       const side = i % 2 === 0 ? GAME_WIDTH - 40 : 40;
       const y = Phaser.Math.Between(LANE_TOP + 10, LANE_BOTTOM - 10);
@@ -246,6 +288,7 @@ export class GameScene extends Phaser.Scene {
   private endGame(won: boolean): void {
     this.gameOver = true;
     this.banner.setAlpha(1).setText(won ? "VITÓRIA!\nR para jogar de novo" : "DERROTA\nR para tentar de novo");
+    this.bannerPanel.setAlpha(1);
   }
 
   /**
@@ -288,13 +331,57 @@ export class GameScene extends Phaser.Scene {
 
   private drawBackground(): void {
     const g = this.add.graphics().setDepth(-10000);
-    g.fillGradientStyle(0x6cb8ff, 0x6cb8ff, 0xd9f0ff, 0xd9f0ff, 1).fillRect(0, 0, GAME_WIDTH, LANE_TOP - 40);
-    g.fillStyle(0x4c9a4a, 1).fillRect(0, LANE_TOP - 40, GAME_WIDTH, 40);
+    g.fillGradientStyle(0x6cb8ff, 0x6cb8ff, 0xd9f0ff, 0xd9f0ff, 1).fillRect(0, 0, GAME_WIDTH, LANE_TOP);
 
     this.add
       .tileSprite(0, LANE_TOP, GAME_WIDTH, GAME_HEIGHT - LANE_TOP, "grass-tile")
       .setOrigin(0, 0)
       .setDepth(-10000);
+
+    this.drawTreeline();
+    this.drawForegroundDecor();
+  }
+
+  /**
+   * Linha de árvores no horizonte, servindo de "parede" da floresta atrás da lane de
+   * combate. Depth fixo (não por y) pra sempre ficar atrás dos personagens.
+   */
+  private drawTreeline(): void {
+    const kinds = ["tree-pine-a", "tree-pine-b", "tree-oak-a", "tree-oak-b"];
+    const rng = new Phaser.Math.RandomDataGenerator(["floresta-lunaris"]);
+    let x = -20;
+    while (x < GAME_WIDTH + 20) {
+      const kind = rng.pick(kinds);
+      const scale = rng.realInRange(0.85, 1.15);
+      this.add
+        .image(x, LANE_TOP + 6, kind)
+        .setOrigin(0.5, 1)
+        .setScale(scale)
+        .setFlipX(rng.frac() < 0.5)
+        .setDepth(-9000);
+      x += rng.integerInRange(70, 100);
+    }
+  }
+
+  /**
+   * Pedras e arbustos decorativos na faixa abaixo da lane jogável (fora da área de
+   * movimento do jogador/inimigos, então nunca atrapalham nem ficam "atravessados").
+   */
+  private drawForegroundDecor(): void {
+    const kinds = ["rock-a", "rock-b", "bush-a", "bush-b"];
+    const rng = new Phaser.Math.RandomDataGenerator(["decoracao-lunaris"]);
+    let x = 20;
+    while (x < GAME_WIDTH - 20) {
+      const kind = rng.pick(kinds);
+      const y = rng.integerInRange(LANE_BOTTOM + 14, GAME_HEIGHT - 12);
+      this.add
+        .image(x, y, kind)
+        .setOrigin(0.5, 1)
+        .setScale(rng.realInRange(0.8, 1.1))
+        .setFlipX(rng.frac() < 0.5)
+        .setDepth(y);
+      x += rng.integerInRange(90, 150);
+    }
   }
 
   /**
@@ -310,6 +397,24 @@ export class GameScene extends Phaser.Scene {
     canvas.height = 32;
     canvas.getContext("2d")!.drawImage(sheet, 0, 96, 32, 32, 0, 0, 32, 32);
     this.textures.addCanvas("grass-tile", canvas);
+  }
+
+  /**
+   * Recorta só a barra (sem a moldura vazia ao redor) do painel de vida gerado no PixelLab
+   * (`ui/health-panel/panel.png`, 384x192, a barra ocupa aprox. x:73-311 y:157-181).
+   */
+  private makeUiTextures(): void {
+    if (this.textures.exists("hp-bar-bg")) return;
+    const sheet = this.textures.get("ui-health-panel").getSourceImage() as HTMLImageElement;
+    const sx = 73;
+    const sy = 157;
+    const sw = 238;
+    const sh = 24;
+    const canvas = document.createElement("canvas");
+    canvas.width = sw;
+    canvas.height = sh;
+    canvas.getContext("2d")!.drawImage(sheet, sx, sy, sw, sh, 0, 0, sw, sh);
+    this.textures.addCanvas("hp-bar-bg", canvas);
   }
 
   /** Monta as animações do Guerreiro a partir dos frames soltos carregados no preload(). */
